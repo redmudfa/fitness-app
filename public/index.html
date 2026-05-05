@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitness Tracker — 个人健身追踪</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f; --surface: #1a1a1a; --border: #2a2a2a;
+      --text: #eee; --text-dim: #888; --accent: #4ade80;
+      --accent-dim: #166534; --danger: #ef4444; --radius: 12px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+
+    header {
+      text-align: center; padding: 40px 0 32px;
+      h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+      p { color: var(--text-dim); margin-top: 4px; }
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; text-align: center;
+      .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+      .label { font-size: 0.85rem; color: var(--text-dim); margin-top: 2px; }
+    }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border-radius: var(--radius); padding: 4px; }
+    .tab {
+      flex: 1; padding: 10px 16px; border: none; background: none; color: var(--text-dim);
+      border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.15s;
+      &:hover { color: var(--text); }
+      &.active { background: var(--border); color: var(--text); font-weight: 600; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 12px;
+      .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+      .card-title { font-weight: 600; }
+      .card-date { font-size: 0.85rem; color: var(--text-dim); }
+      .card-detail { font-size: 0.9rem; color: var(--text-dim); display: flex; gap: 16px; flex-wrap: wrap; }
+      .card-notes { font-size: 0.85rem; color: var(--text-dim); margin-top: 6px; font-style: italic; }
+    }
+
+    /* Forms */
+    .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+    .form-section h3 { margin-bottom: 16px; font-size: 1.1rem; }
+
+    .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .form-group { flex: 1; min-width: 120px; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.95rem;
+      &:focus { outline: none; border-color: var(--accent); }
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #000; &:hover { opacity: 0.9; } }
+    .btn-danger { background: none; color: var(--danger); font-size: 0.8rem; padding: 4px 8px; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* Exercise row in workout form */
+    .exercise-row {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px;
+      .ex-header { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    }
+    .set-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 0.9rem; color: var(--text-dim); }
+
+    .empty { text-align: center; padding: 48px 16px; color: var(--text-dim); }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem;
+      background: var(--accent-dim); color: var(--accent);
+    }
+
+    footer { text-align: center; padding: 40px 0; color: var(--text-dim); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏋️ Fitness Tracker</h1>
+      <p>个人健身数据追踪 · 跑步 & 力量训练</p>
+    </header>
+
+    <div class="stats-grid" id="stats"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="runs">🏃 跑步记录</button>
+      <button class="tab" data-tab="workouts">💪 力量训练</button>
+    </div>
+
+    <!-- Runs panel -->
+    <div id="panel-runs">
+      <div class="form-section">
+        <h3>➕ 添加跑步记录</h3>
+        <form id="run-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>日期</label>
+              <input type="date" id="run-date" required>
+            </div>
+            <div class="form-group">
+              <label>距离 (km)</label>
+              <input type="number" id="run-distance" step="0.1" min="0.1" placeholder="5.0" required>
+            </div>
+            <div class="form-group">
+              <label>时长 (分钟)</label>
+              <input type="number" id="run-duration" step="1" min="1" placeholder="30" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>备注</label>
+              <input type="text" id="run-notes" placeholder="轻松跑、节奏跑...">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">记录跑步</button>
+        </form>
+      </div>
+      <div id="run-list"></div>
+    </div>
+
+    <!-- Workouts panel -->
+    <div id="panel-workouts" style="display:none;">
+      <div class="form-section">
+        <h3>➕ 添加训练记录</h3>
+        <form id="workout-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>日期</label>
+              <input type="date" id="wk-date" required>
+            </div>
+            <div class="form-group">
+              <label>备注</label>
+              <input type="text" id="wk-notes" placeholder="如: 胸+三头">
+            </div>
+          </div>
+          <div id="exercise-rows"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" class="btn btn-sm" id="add-exercise" style="background:var(--border);color:var(--text);">+ 添加动作</button>
+            <button type="submit" class="btn btn-primary">记录训练</button>
+          </div>
+        </form>
+      </div>
+      <div id="workout-list"></div>
+    </div>
+
+    <footer>Fitness Tracker v1.0 · Node.js + Express + SQLite</footer>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
+
+    // ── Tabs ──
+    $$('.tab').forEach(t => t.addEventListener('click', () => {
+      $$('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      $('#panel-runs').style.display = t.dataset.tab === 'runs' ? 'block' : 'none';
+      $('#panel-workouts').style.display = t.dataset.tab === 'workouts' ? 'block' : 'none';
+    }));
+
+    // ── Stats ──
+    async function loadStats() {
+      const res = await fetch('/api/summary');
+      const d = await res.json();
+      $('#stats').innerHTML = `
+        <div class="stat-card"><div class="value">${d.total_runs || 0}</div><div class="label">跑步次数</div></div>
+        <div class="stat-card"><div class="value">${(d.total_distance || 0).toFixed(1)}</div><div class="label">总跑量 (km)</div></div>
+        <div class="stat-card"><div class="value">${d.total_sessions || 0}</div><div class="label">训练次数</div></div>
+        <div class="stat-card"><div class="value">${((d.total_volume_kg || 0) / 1000).toFixed(1)}</div><div class="label">总容量 (吨)</div></div>
+      `;
+    }
+
+    // ── Runs ──
+    $('#run-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/api/runs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: $('#run-date').value,
+          distance_km: parseFloat($('#run-distance').value),
+          duration_min: parseFloat($('#run-duration').value),
+          notes: $('#run-notes').value || null
+        })
+      });
+      $('#run-form').reset();
+      loadRuns(); loadStats();
+    });
+
+    async function loadRuns() {
+      const res = await fetch('/api/runs');
+      const runs = await res.json();
+      const el = $('#run-list');
+      if (!runs.length) { el.innerHTML = '<div class="empty">暂无跑步记录，添加第一条吧 🏃</div>'; return; }
+      el.innerHTML = runs.map(r => `
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">${r.distance_km} km</span>
+            <span class="card-date">${r.date}</span>
+          </div>
+          <div class="card-detail">
+            <span>⏱ ${r.duration_min} 分钟</span>
+            <span>🏃 配速 ${r.pace_min_per_km ? r.pace_min_per_km.toFixed(1) + "'/km" : '--'}</span>
+          </div>
+          ${r.notes ? `<div class="card-notes">${r.notes}</div>` : ''}
+          <button class="btn btn-danger" onclick="deleteRun(${r.id})">删除</button>
+        </div>
+      `).join('');
+    }
+
+    async function deleteRun(id) {
+      await fetch(`/api/runs/${id}`, { method: 'DELETE' });
+      loadRuns(); loadStats();
+    }
+
+    // ── Workouts ──
+    let exerciseCount = 0;
+
+    function addExerciseRow(name = '', sets = [{ reps: '', weight: '' }]) {
+      const i = exerciseCount++;
+      const div = document.createElement('div');
+      div.className = 'exercise-row';
+      div.dataset.idx = i;
+      renderExerciseRow(div, i, name, sets);
+      $('#exercise-rows').appendChild(div);
+    }
+
+    function renderExerciseRow(div, i, name, sets) {
+      div.innerHTML = `
+        <div class="ex-header">
+          <div class="form-group" style="flex:1">
+            <label>动作名称</label>
+            <input type="text" class="ex-name" value="${name}" placeholder="如: 杠铃卧推" required>
+          </div>
+          <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.exercise-row').remove()" style="margin-top:18px;">✕</button>
+        </div>
+        <div class="sets-container" data-idx="${i}">
+          ${sets.map((s, si) => `
+            <div class="set-row">
+              <span style="width:50px;">第${si + 1}组</span>
+              <input type="number" class="set-reps" value="${s.reps}" placeholder="次数" min="0" style="width:80px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+              <input type="number" class="set-weight" value="${s.weight}" placeholder="重量kg" step="0.5" min="0" style="width:80px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+            </div>
+          `).join('')}
+          <button type="button" class="btn btn-sm add-set-btn" style="background:var(--border);color:var(--text);margin-top:4px;">+ 添加组</button>
+        </div>
+      `;
+      div.querySelector('.add-set-btn').addEventListener('click', () => {
+        const container = div.querySelector('.sets-container');
+        const si = container.querySelectorAll('.set-row').length;
+        const row = document.createElement('div');
+        row.className = 'set-row';
+        row.innerHTML = `
+          <span style="width:50px;">第${si + 1}组</span>
+          <input type="number" class="set-reps" value="" placeholder="次数" min="0" style="width:80px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+          <input type="number" class="set-weight" value="" placeholder="重量kg" step="0.5" min="0" style="width:80px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+        `;
+        container.insertBefore(row, div.querySelector('.add-set-btn'));
+      });
+    }
+
+    $('#add-exercise').addEventListener('click', () => addExerciseRow());
+
+    $('#workout-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rows = [...$$('#exercise-rows .exercise-row')];
+      const exercises = rows.map(row => ({
+        name: row.querySelector('.ex-name').value,
+        sets: [...row.querySelectorAll('.set-row')].map(sr => ({
+          reps: parseInt(sr.querySelector('.set-reps').value) || 0,
+          weight_kg: parseFloat(sr.querySelector('.set-weight').value) || 0
+        }))
+      })).filter(ex => ex.name.trim());
+
+      if (!exercises.length) { alert('请至少添加一个训练动作'); return; }
+
+      await fetch('/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: $('#wk-date').value,
+          notes: $('#wk-notes').value || null,
+          exercises
+        })
+      });
+      $('#workout-form').reset();
+      $('#exercise-rows').innerHTML = '';
+      exerciseCount = 0;
+      addExerciseRow();
+      loadWorkouts(); loadStats();
+    });
+
+    async function loadWorkouts() {
+      const res = await fetch('/api/workouts');
+      const workouts = await res.json();
+      const el = $('#workout-list');
+      if (!workouts.length) { el.innerHTML = '<div class="empty">暂无训练记录，添加第一条吧 💪</div>'; return; }
+      el.innerHTML = workouts.map(w => `
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">${w.notes ? w.notes : '训练记录'}</span>
+            <span class="card-date">${w.date}</span>
+          </div>
+          ${w.exercises.map(ex => {
+            const sets = [];
+            for (const s of ex) {
+              if (s.exercise_name !== (ex[0]?.exercise_name)) continue;
+            }
+            return '';
+          })}
+          ${(() => {
+            const grouped = {};
+            for (const s of w.exercises) {
+              if (!grouped[s.exercise_name]) grouped[s.exercise_name] = [];
+              grouped[s.exercise_name].push(s);
+            }
+            return Object.entries(grouped).map(([name, sets]) => `
+              <div style="margin:8px 0;">
+                <span class="badge">${name}</span>
+                <span style="font-size:0.85rem;color:var(--text-dim);margin-left:8px;">
+                  ${sets.map(s => `${s.reps || 0}次${s.weight_kg ? ' × ' + s.weight_kg + 'kg' : ''}`).join(' | ')}
+                </span>
+              </div>
+            `).join('');
+          })()}
+          <button class="btn btn-danger" onclick="deleteWorkout(${w.id})">删除</button>
+        </div>
+      `).join('');
+    }
+
+    async function deleteWorkout(id) {
+      await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
+      loadWorkouts(); loadStats();
+    }
+
+    // ── Init ──
+    $('#run-date').value = new Date().toISOString().slice(0, 10);
+    $('#wk-date').value = new Date().toISOString().slice(0, 10);
+    addExerciseRow();
+    loadStats();
+    loadRuns();
+    loadWorkouts();
+  </script>
+</body>
+</html>
