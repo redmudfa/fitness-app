@@ -1,0 +1,16 @@
+{
+  "name": "fitness-app",
+  "version": "1.0.0",
+  "description": "个人健身追踪应用 — 记录跑步和力量训练数据",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "seed": "node server/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.0"
+  },
+  "license": "MIT"
+}
