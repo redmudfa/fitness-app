@@ -138,6 +138,32 @@ app.get('/api/workouts/stats', (_req, res) => {
   res.json(stats);
 });
 
+// ── 图表数据 ──────────────────────────────────────────────
+
+app.get('/api/runs/chart', (_req, res) => {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT strftime('%Y-W%W', date) AS week, date(min(date), 'weekday 0') AS week_start,
+           SUM(distance_km) AS total_km, COUNT(*) AS count
+    FROM run_records
+    GROUP BY week ORDER BY week
+  `).all();
+  res.json(rows);
+});
+
+app.get('/api/workouts/chart', (_req, res) => {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT strftime('%Y-W%W', ws.date) AS week, date(min(ws.date), 'weekday 0') AS week_start,
+           COUNT(DISTINCT ws.id) AS sessions,
+           COALESCE(SUM(ws2.reps * ws2.weight_kg), 0) AS volume_kg
+    FROM workout_sessions ws
+    LEFT JOIN workout_sets ws2 ON ws2.session_id = ws.id
+    GROUP BY week ORDER BY week
+  `).all();
+  res.json(rows);
+});
+
 // ── 首页汇总 ──────────────────────────────────────────────
 
 app.get('/api/summary', (_req, res) => {

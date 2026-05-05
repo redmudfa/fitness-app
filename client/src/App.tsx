@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { StatsGrid } from './components/StatsGrid';
+import { RunChart } from './components/RunChart';
+import { WorkoutChart } from './components/WorkoutChart';
 import { RunForm } from './components/RunForm';
 import { RunList } from './components/RunList';
 import { WorkoutForm } from './components/WorkoutForm';
@@ -7,11 +9,11 @@ import { WorkoutList } from './components/WorkoutList';
 import { api } from './api';
 import type { Summary } from './types';
 
-type Tab = 'runs' | 'workouts';
+type Tab = 'dashboard' | 'runs' | 'workouts';
 
 export default function App() {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [tab, setTab] = useState<Tab>('runs');
+  const [tab, setTab] = useState<Tab>('dashboard');
   const [runKey, setRunKey] = useState(0);
   const [wkKey, setWkKey] = useState(0);
 
@@ -38,6 +40,12 @@ export default function App() {
 
       <div className="tabs">
         <button
+          className={`tab ${tab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setTab('dashboard')}
+        >
+          📊 数据看板
+        </button>
+        <button
           className={`tab ${tab === 'runs' ? 'active' : ''}`}
           onClick={() => setTab('runs')}
         >
@@ -50,6 +58,13 @@ export default function App() {
           💪 力量训练
         </button>
       </div>
+
+      {tab === 'dashboard' && (
+        <div className="charts-grid">
+          <RunChart refreshKey={runKey} />
+          <WorkoutChart refreshKey={wkKey} />
+        </div>
+      )}
 
       {tab === 'runs' && (
         <>

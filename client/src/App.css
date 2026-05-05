@@ -255,7 +255,27 @@ footer {
   font-size: 0.85rem;
 }
 
+/* Charts */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.chart-card h3 {
+  font-size: 1rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
 @media (max-width: 600px) {
   .container { padding: 12px; }
   .form-row { flex-direction: column; }
+  .charts-grid { grid-template-columns: 1fr; }
 }
