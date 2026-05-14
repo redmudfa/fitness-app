@@ -46,7 +46,7 @@ if [ "$1" = "analysis" ]; then
   echo "🔍 全局项目分析..."
   sudo -u $CLAUDE_USER bash -c "
     export ANTHROPIC_BASE_URL='https://api.deepseek.com/anthropic'
-    export ANTHROPIC_AUTH_TOKEN='sk-3013230fa82b4e73a9cac3617a66db4d'
+    # 使用系统环境变量 ANTHROPIC_AUTH_TOKEN（已在 .bashrc 中配置）
     export ANTHROPIC_MODEL='deepseek-v4-pro[1m]'
     export ANTHROPIC_DEFAULT_SONNET_MODEL='deepseek-v4-pro[1m]'
     export ANTHROPIC_DEFAULT_HAIKU_MODEL='deepseek-v4-flash'
@@ -91,7 +91,7 @@ echo ""
 # 通过 redmudwsl 用户启动 claude
 sudo -u $CLAUDE_USER bash -c "
   export ANTHROPIC_BASE_URL='https://api.deepseek.com/anthropic'
-  export ANTHROPIC_AUTH_TOKEN='sk-3013230fa82b4e73a9cac3617a66db4d'
+  # 使用系统环境变量 ANTHROPIC_AUTH_TOKEN（已在 .bashrc 中配置）
   export ANTHROPIC_MODEL='deepseek-v4-pro[1m]'
   export ANTHROPIC_DEFAULT_SONNET_MODEL='deepseek-v4-pro[1m]'
   export ANTHROPIC_DEFAULT_HAIKU_MODEL='deepseek-v4-flash'
